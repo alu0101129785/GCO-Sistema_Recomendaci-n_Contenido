@@ -1,7 +1,7 @@
 package gco.sis_recomendacion_contenido;
 
+import static gco.sis_recomendacion_contenido.CosineSim.printCosineSim;
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.lang.Math;
 
 /**
  *
@@ -85,12 +86,73 @@ public class ContentRecommendation {
     return t;
   }
   
+  public static List<Double> idf(Tuple<List<List<String>>, List<String>, List<Map<Integer, Double>>> t) {
+    final int N = t.e1.size();
+    List<Double> idf = new LinkedList<Double>();
+    for (String word : t.e2) {
+      int index = t.e2.indexOf(word);
+      int dfx = 0;
+      for (Map<Integer, Double> freq : t.e3) {
+        if(freq.getOrDefault(index, 0.) > 0) {
+          dfx++;
+        }
+      }
+      double idfx = Math.log10(N/(dfx+0.0));
+      idf.add(idfx);
+      //System.out.println("dfx:" + dfx);
+    }
+
+    return idf;
+  }
+  
+  public static double[][] tfIdf(List<Map<Integer, Double>> tf, List<Double> idf, int uniqueTerms) {
+    int numDocs = tf.size();
+    double[][] tfIdf = new double[numDocs][uniqueTerms];
+    for(int doc = 0; doc < numDocs; doc++) {
+      for(int term = 0; term < uniqueTerms; term++) {
+        tfIdf[doc][term] = tf.get(doc).getOrDefault(term, 0.) * idf.get(term);
+      }
+    }
+    return tfIdf;
+  }
+  
+  public static void printTable(List<List<String>> docTokens, 
+                                List<String> docTerms, 
+                                List<Map<Integer, Double>> tf, 
+                                List<Double> idf, double[][] tfIdf) {
+    
+    for(int doc = 0; doc < docTokens.size(); doc++) {
+      System.out.println("|   Id    |" + "|    Término   |" + "|   TF  |" + "|    IDF    |" + "|   TF-IDF   |");
+      var tokens = docTokens.get(doc);
+      List<String> checker = new LinkedList<>();
+      for (String token : tokens) {
+        if(checker.indexOf(token) == -1) {
+          checker.add(token);
+          int index = docTerms.indexOf(token);
+          double tfx = tf.get(doc).getOrDefault(index, 0.);
+          double idfx = idf.get(index);
+          double tfIdfx = tfIdf[doc][index];
+          System.out.println("|   " + index + "   |" + "|   " + token + "   |" + "|   " + tfx +  "   |" + "|   " + idfx +  "   |" + "|   " + tfIdfx +"   |");
+        }
+      }
+      System.out.println("");
+    }
+    
+    
+  }
+  
   public static void main(String[] args) {
     if(args.length != 1){
       System.out.println("Número erróneo de argumentos");
       System.exit(1);
     }
     List<String> documents = readDocuments(args[0]);
+    
+    Tuple<List<List<String>>, List<String>, List<Map<Integer, Double>>> t = tfTokenizeDocuments(documents);
+    List<Double> idf = idf(t);
+    double[][] tfIdf = tfIdf(t.e3, idf, t.e2.size());
+    printTable(t.e1, t.e2,t.e3, idf, tfIdf);
+    printCosineSim(tfIdf);
   }
 }
 
