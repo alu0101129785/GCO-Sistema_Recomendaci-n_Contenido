@@ -8,6 +8,7 @@ import java.util.List;
  */
 public class CosineSim {
   
+  // Función para el cálculo de la similitud coseno entre documentos
   public static double cosineSim(double[] doc1, double[] doc2) {
     double scalarProduct = 0;
     double module1 = 0;
@@ -22,6 +23,7 @@ public class CosineSim {
     return scalarProduct/(module1 * module2);
   }
   
+  // Método para imprimir la similitud coseno
   public static void printCosineSim(double[][] tfIdf) { 
     for (int doc1 = 0; doc1 < tfIdf.length; doc1++) {
       for (int doc2 = doc1 + 1; doc2 < tfIdf.length; doc2++) {

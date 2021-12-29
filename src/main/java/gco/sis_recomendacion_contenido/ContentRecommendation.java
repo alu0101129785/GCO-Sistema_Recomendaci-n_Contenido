@@ -16,6 +16,8 @@ import java.lang.Math;
  * @author Saúl
  */
 public class ContentRecommendation {
+  
+  // Función para leer el fichero. Toma cada línea como un documento distinto
   public static List<String> readDocuments(String filename) {
     // Fichero del que queremos leer
     File matriz_entrada = new File (filename);
@@ -45,13 +47,15 @@ public class ContentRecommendation {
     }
     return documents;
   }
-    
+  
+  // Clase auxiliar para representar una tupla de datos
   static class Tuple<T1, T2, T3>{
-    public T1 e1;
-    public T2 e2;
-    public T3 e3;
+    public T1 e1;   // índice
+    public T2 e2;   // término
+    public T3 e3;   // valor TF
   }
   
+  // Función que devuelve una tupla de datos siendo e1 el índice, e2 el término y e3 el valor del TF 
   public static Tuple<List<List<String>>, List<String>, List<Map<Integer, Double>>> tfTokenizeDocuments(List<String> documents) {
     List<List<String>> result = new LinkedList<>();
     Pattern p = Pattern.compile("\\b[\\w'-]+\\b");
@@ -86,6 +90,7 @@ public class ContentRecommendation {
     return t;
   }
   
+  // Función para el cálculo del IDF
   public static List<Double> idf(Tuple<List<List<String>>, List<String>, List<Map<Integer, Double>>> t) {
     final int N = t.e1.size();
     List<Double> idf = new LinkedList<Double>();
@@ -105,6 +110,7 @@ public class ContentRecommendation {
     return idf;
   }
   
+  // Función para el cálculo del TF-IDF
   public static double[][] tfIdf(List<Map<Integer, Double>> tf, List<Double> idf, int uniqueTerms) {
     int numDocs = tf.size();
     double[][] tfIdf = new double[numDocs][uniqueTerms];
@@ -116,13 +122,14 @@ public class ContentRecommendation {
     return tfIdf;
   }
   
+  // Función para imprimir los resultados en forma de tabla
   public static void printTable(List<List<String>> docTokens, 
                                 List<String> docTerms, 
                                 List<Map<Integer, Double>> tf, 
                                 List<Double> idf, double[][] tfIdf) {
     
     for(int doc = 0; doc < docTokens.size(); doc++) {
-      System.out.println("|   Id    |" + "|    Término   |" + "|   TF  |" + "|    IDF    |" + "|   TF-IDF   |");
+      System.out.println("|  " +  String.format("%5s","ID") + "   |" + " |   " +  String.format("%15s","Término") + "   |" + "|" + String.format("%7s","TF") + "     |" + "|" + String.format("%7s","IDF") + "     |" + "| " + String.format("%8s","TF-IDF") + "   |");
       var tokens = docTokens.get(doc);
       List<String> checker = new LinkedList<>();
       for (String token : tokens) {
@@ -132,22 +139,31 @@ public class ContentRecommendation {
           double tfx = tf.get(doc).getOrDefault(index, 0.);
           double idfx = idf.get(index);
           double tfIdfx = tfIdf[doc][index];
-          System.out.println("|   " + index + "   |" + "|   " + token + "   |" + "|   " + tfx +  "   |" + "|   " + idfx +  "   |" + "|   " + tfIdfx +"   |");
+          System.out.println("|  " + String.format("%5s",index) + "   | " + "|   " + String.format("%15s",token) + "   |" + "|   " + String.format("%.4f",tfx) +  "   |" + "|   " + String.format("%.4f",idfx) +  "   |" + "|   " + String.format("%.4f",tfIdfx) +"   |");
         }
       }
-      System.out.println("");
+      System.out.println("\n");
     }
-    
-    
   }
+  
+  /**********************
+   * Programa Principal *
+  ***********************/
   
   public static void main(String[] args) {
     if(args.length != 1){
+      System.out.println("\n*********************************************");
       System.out.println("Número erróneo de argumentos");
+      System.out.print("Se requiere que se indique el nombre del fichero.\n");
+      System.out.print("Ejemplo de uso:");
+      System.out.print("\n\tdocuments-01.txt\n");
+      System.out.println("*********************************************\n");
       System.exit(1);
     }
     List<String> documents = readDocuments(args[0]);
-    
+    System.out.println("\n---------------------------------------------------");
+    System.out.println("Resultado del Sistema de Recomentación de Contenido");
+    System.out.println("---------------------------------------------------\n");
     Tuple<List<List<String>>, List<String>, List<Map<Integer, Double>>> t = tfTokenizeDocuments(documents);
     List<Double> idf = idf(t);
     double[][] tfIdf = tfIdf(t.e3, idf, t.e2.size());
